@@ -35,7 +35,6 @@
     "@types/node": "^22.15.21",
     "aws-cdk": "^2.1016.1",
     "aws-cdk-lib": "^2.198.0",
-    "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.9",
     "constructs": "^10.4.2",
@@ -43,7 +42,6 @@
     "source-map-support": "^0.5.21",
     "tweetnacl": "^1.0.3",
     "typescript": "^5.8.3",
-    "uuid": "^11.0.5",
-    "uuidv4": "^6.2.13"
+    "uuid": "^11.0.5"
   }
 }

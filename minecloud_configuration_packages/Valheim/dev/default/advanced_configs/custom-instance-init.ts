@@ -4,10 +4,10 @@ import {
   InitFile,
   InitPackage
 } from 'aws-cdk-lib/aws-ec2';
-import { MINECLOUD_SERVER_DIR } from '../../lib/const/minecloud-dir';
-import { STEAM_CMD_INIT } from '../../shared_lib/steamcmd-init';
+import { MINECLOUD_SERVER_DIR } from '../../../../../lib/const/minecloud-dir';
+import { STEAM_CMD_INIT } from '../../../../../shared_lib/steamcmd-init';
 import { VALHEIM_PASSWORD, VALHEIM_SERVER_NAME, VALHEIM_WORLD } from '../valheim-server-settings';
-import { setUpEnviromentVariable, setUpShellScript } from '../../shared_lib/minecloud-utilities';
+import { setUpEnviromentVariable, setUpShellScript } from '../../../../../shared_lib/minecloud-utilities';
 
 export const CUSTOM_INIT_CONFIG: InitConfig = getCustomInitConfig();
 

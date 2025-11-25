@@ -4,7 +4,7 @@ import {
   InitFile,
   InitPackage
 } from 'aws-cdk-lib/aws-ec2';
-import { MINECLOUD_SERVER_DIR } from '../../lib/const/minecloud-dir';
+import { MINECLOUD_SERVER_DIR } from '../../../../../lib/const/minecloud-dir';
 import { DEPLOY_LOCAL_SERVER_EXECUTABLE } from '../MineCloud-Configs';
 import { MINECRAFT_SERVER_DOWNLOAD_URL } from './minecraft-server-download-url';
 
