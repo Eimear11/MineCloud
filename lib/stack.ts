@@ -1,5 +1,6 @@
+import * as path from 'path';
 import { Construct } from 'constructs';
-import { SpotInstance } from './spot-instance';
+import { SpotInstance } from './ec2/spot_instance';
 import {
   CfnOutput,
   CustomResource,
@@ -15,50 +16,34 @@ import {
   ServicePrincipal
 } from 'aws-cdk-lib/aws-iam';
 import {
-  AmazonLinuxGeneration,
-  AmazonLinuxImage,
-  BlockDeviceVolume,
   CfnKeyPair,
-  InstanceType,
-  KeyPair,
+  Instance,
   Peer,
   Port,
   SecurityGroup,
-  SpotInstanceInterruption,
-  SpotRequestType,
-  SubnetType,
   Vpc
 } from 'aws-cdk-lib/aws-ec2';
-import { DiscordInteractionsEndpointConstruct } from './discord-interactions-endpoint-construct';
-import * as cr from 'aws-cdk-lib/custom-resources';
+import { DiscordInteractionsEndpointConstruct } from './discord_interactions_endpoint_construct';
+import { Provider } from 'aws-cdk-lib/custom-resources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
-import path = require('path');
 import {
-  EC2_INSTANCE_TYPE,
-  MAX_PRICE,
-  EC2_VOLUME,
-  EC2_INIT_TIMEOUT,
   STACK_NAME
-} from '../minecloud_configs/MineCloud-Configs';
-
+} from '../minecloud_configs/config';
 import {
   DISCORD_PUBLIC_KEY,
   DISCORD_APP_ID,
-  DISCORD_BOT_TOKEN
+  DISCORD_BOT_TOKEN,
+  S3_BUCKET_SUFFIX
 } from '../MineCloud-Service-Info';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
-import { getInitConfig } from './instance-init';
-import { v4 } from 'uuid';
 import { PORT_CONFIGS } from '../minecloud_configs/advanced_configs/port-configs';
-import { IGNORE_FAILURE_ON_INSTANCE_INIT } from '../minecloud_configs/advanced_configs/other-configs';
-
-export const STACK_PREFIX = STACK_NAME;
-
 import {
   DOMAIN_NAME
 } from '../MineCloud-Service-Info';
-import route53 = require('aws-cdk-lib/aws-route53');
+import { ARecord, HostedZone } from 'aws-cdk-lib/aws-route53';
+
+export const STACK_PREFIX = STACK_NAME;
 
 export class MineCloud extends Stack {
   readonly ec2Instance;
@@ -73,8 +58,8 @@ export class MineCloud extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // setup backup S3 bucket
-    const backUpBucketName = `${STACK_PREFIX.toLowerCase()}-backups-${v4()}`;
+    const backUpBucketName = `${STACK_PREFIX.toLowerCase()}-backups-${S3_BUCKET_SUFFIX}`;
+    console.log(`bucketName: ${backUpBucketName}`);
     this.backupBucket = new Bucket(this, `${STACK_PREFIX}_backup_s3_bucket`, {
       // Bucket name must be at least 3 and no more than 63 characters
       bucketName: backUpBucketName.substring(0,62)
@@ -112,7 +97,7 @@ export class MineCloud extends Stack {
     );
   }
 
-  setupEC2Instance(backupBucketName: string): SpotInstance {
+  setupEC2Instance(backupBucketName: string): Instance {
     const defaultVPC = Vpc.fromLookup(this, `${STACK_PREFIX}_vpc`, {
       isDefault: true
     });
@@ -159,48 +144,19 @@ export class MineCloud extends Stack {
       keyName: `${STACK_PREFIX}_ec2_key`
     });
 
-    const spotInstance = new SpotInstance(this, `${STACK_PREFIX}_ec2_instance`, {
-      vpc: defaultVPC,
-      keyPair: KeyPair.fromKeyPairName(this, 'Ec2KeyPair', sshKeyPair.keyName),
-      role: ec2Role,
-      // vpcSubnets: {
-      //   // Place in a public subnet in-order to have a public ip address
-      //   subnetType: SubnetType.PUBLIC
-      // },
-      securityGroup: securityGroup,
-      instanceType: new InstanceType(EC2_INSTANCE_TYPE),
-      machineImage: new AmazonLinuxImage({
-        generation: AmazonLinuxGeneration.AMAZON_LINUX_2023
-      }),
-      templateId: `${STACK_PREFIX}_ec2_launch_template`,
-      launchTemplateSpotOptions: {
-        interruptionBehavior: SpotInstanceInterruption.STOP,
-        requestType: SpotRequestType.PERSISTENT,
-        maxPrice: MAX_PRICE
-      },
-      initOptions: {
-        ignoreFailures: IGNORE_FAILURE_ON_INSTANCE_INIT,
-        timeout: Duration.minutes(EC2_INIT_TIMEOUT),
-        configSets: ['default']
-      },
-      blockDevices: [
-        {
-          deviceName: '/dev/xvda',
-          volume: BlockDeviceVolume.ebs(EC2_VOLUME)
-        }
-      ],
-      // Note:
-      // Making changes to init config will replace the old EC2 instance and
-      // WILL RESULT IN DANGLING SPOT REQUEST AND EC2 INSTANCE
-      // (YOU'LL NEED TO MANUALLY CANCEL THE DANGLING SPOT REQUEST TO AVOID SPINNING UP ADDITIONAL EC2 INSTANCE)
-      init: getInitConfig(backupBucketName)
+    const spotInstanceConstruct = new SpotInstance(this,  `${STACK_PREFIX}_ec2_spot`, {
+      backupBucketName,
+      defaultVPC,
+      ec2Role,
+      securityGroup,
+      sshKeyPair
     });
 
     // Optional: do all the DNS related stuff only when a DOMAIN_NAME parameter is set
     if (DOMAIN_NAME) {
 
       // get a reference to the existing hosted zone
-      const zone = route53.HostedZone.fromLookup(this, 'Zone', { domainName: DOMAIN_NAME })
+      const zone = HostedZone.fromLookup(this, 'Zone', { domainName: DOMAIN_NAME })
 
       // add permission to describe tags of an EC2 instance and lookup hosted zones by DNS domain name
       ec2Role.addToPolicy(
@@ -231,7 +187,7 @@ export class MineCloud extends Stack {
       // It seems as if the Arecord does not get deleted upon CDK destroy
       // in that case we could simply re-use the old entry until the issue gets fixed
       // is it possible that the record cannot be deleted when its value gets updated externally?
-      const aliasRecord = new route53.ARecord(this, 'MyARecord', {
+      const aliasRecord = new ARecord(this, 'MyARecord', {
           target: { 
             values: ['192.168.0.1'],
           },
@@ -240,10 +196,10 @@ export class MineCloud extends Stack {
         });
 
       // Add the DOMAIN_NAME as a tag to the EC2 instance to pass the value to the machine
-      Tags.of(spotInstance).add('DOMAIN_NAME', DOMAIN_NAME);
+      Tags.of(spotInstanceConstruct.instance).add('DOMAIN_NAME', DOMAIN_NAME);
     }
     
-    return spotInstance;
+    return spotInstanceConstruct.instance;
   }
 
   setupDiscordCommands(): CustomResource {
@@ -270,8 +226,8 @@ export class MineCloud extends Stack {
         timeout: Duration.seconds(30)
       }
     );
-
-    const provider = new cr.Provider(
+  
+    const provider = new Provider(
       this,
       `${STACK_PREFIX}_discord_commands_register_provider`,
       {

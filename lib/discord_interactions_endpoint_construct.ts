@@ -1,5 +1,5 @@
 import { Construct } from 'constructs/lib/construct';
-import { STACK_PREFIX } from './mine-cloud-stack';
+import { STACK_PREFIX } from './stack';
 import {
   Runtime,
   FunctionUrlAuthType,
