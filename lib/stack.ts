@@ -144,6 +144,12 @@ export class MineCloud extends Stack {
       keyName: `${STACK_PREFIX}_ec2_key`
     });
 
+    // Create output for keypair - accessible from console
+    new CfnOutput(this, "KeypairOutput", {
+      key: "KeypairID",
+      value: sshKeyPair.attrKeyPairId
+    });
+
     const spotInstanceConstruct = new SpotInstance(this,  `${STACK_PREFIX}_ec2_spot`, {
       backupBucketName,
       defaultVPC,
