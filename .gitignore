@@ -9,6 +9,7 @@ node_modules
 cdk.out
 
 dist
+coverage
 MineCloud-Service-Info.ts
 .DS_Store
 MineCloud-Service-Info.ts.mine

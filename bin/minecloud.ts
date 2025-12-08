@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { MineCloud } from '../lib/mine-cloud-stack';
-import { STACK_NAME } from '../minecloud_configs/MineCloud-Configs';
+import { MineCloud } from '../lib/stack';
+import { STACK_NAME } from '../minecloud_configs/config';
 
 import { AWS_ACCOUNT_ID, AWS_REGION } from '../MineCloud-Service-Info';
 
@@ -11,7 +11,8 @@ new MineCloud(app, STACK_NAME, {
   env: {
     account: AWS_ACCOUNT_ID,
     region: AWS_REGION // or whatever region you use
-  }
+  },
+
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */

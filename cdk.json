@@ -1,5 +1,5 @@
 {
-  "app": "npx ts-node --prefer-ts-exts bin/mine-cloud.ts",
+  "app": "npx ts-node --prefer-ts-exts bin/minecloud.ts",
   "watch": {
     "include": ["**"],
     "exclude": [

@@ -19,5 +19,5 @@ export const EC2_INIT_TIMEOUT = 15;
 
 // --------------- Backup Settings------------------ //
 // At most how many backups
-export const MAX_BACKUP_COUNT = 3;
+export const MAX_BACKUP_COUNT = 5;
 export const BACKUP_INTERVAL_IN_SECONDS = 10800;

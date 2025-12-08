@@ -5,7 +5,7 @@ import {
   InitPackage
 } from 'aws-cdk-lib/aws-ec2';
 import { MINECLOUD_SERVER_DIR } from '../../lib/const/minecloud-dir';
-import { DEPLOY_LOCAL_SERVER_EXECUTABLE } from '../MineCloud-Configs';
+import { DEPLOY_LOCAL_SERVER_EXECUTABLE } from '../config';
 import { MINECRAFT_SERVER_DOWNLOAD_URL } from './minecraft-server-download-url';
 
 export const CUSTOM_INIT_CONFIG: InitConfig = getCustomInitConfig();
