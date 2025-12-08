@@ -147,7 +147,8 @@ export class MineCloud extends Stack {
     // Create output for keypair - accessible from console
     new CfnOutput(this, "KeypairOutput", {
       key: "KeypairID",
-      value: sshKeyPair.attrKeyPairId
+      value: sshKeyPair.attrKeyPairId,
+      description: `The key pair ID for the EC2 instance. Run \`aws ssm get-parameter --name /ec2/keypair/${sshKeyPair.attrKeyPairId} --with-decryption --query Parameter.Value --output text > tokenName.pem\` to get the pem file.`
     });
 
     const spotInstanceConstruct = new SpotInstance(this,  `${STACK_PREFIX}_ec2_spot`, {
