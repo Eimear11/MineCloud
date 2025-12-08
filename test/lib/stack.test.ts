@@ -1,21 +1,39 @@
 import { App } from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Match, Template } from 'aws-cdk-lib/assertions';
 import { MineCloud } from '../../lib/stack';
 import { STACK_NAME } from '../../minecloud_configs/config';
-import { AmazonLinuxGeneration, AmazonLinuxImage } from 'aws-cdk-lib/aws-ec2';
 import { describe, test } from 'node:test';
 
 describe('stack', () => {
+    const app = new App();
+    const stack = new MineCloud(app, STACK_NAME, {
+        env: {
+            account: '123',
+            region: 'eu-west-1'
+        }
+    });
+    const template = Template.fromStack(stack);
+    
     test('Should contain EC2 spot instance', () => {
-        const app = new App();
-        const stack = new MineCloud(app, STACK_NAME);
-        const template = Template.fromStack(stack);
 
-        template.hasResourceProperties('AWS::EC2::instance', {
-            machineImage: new AmazonLinuxImage({
-                generation: AmazonLinuxGeneration.AMAZON_LINUX_2023,
-                cachedInContext: true
-            })
+        template.hasResourceProperties('AWS::EC2::Instance', {
+            InstanceType: 't3.large',
+            Tags: Match.arrayWith([{
+                Key: 'Name',
+                Value: 'MinecraftExample'
+            }])
         });
+
+        template.allResourcesProperties('AWS::EC2::LaunchTemplate', {
+            LaunchTemplateData: {
+                InstanceMarketOptions: {
+                    MarketType: 'spot',
+                    SpotOptions: {
+                        InstanceInterruptionBehavior: 'stop',
+                        SpotInstanceType: 'persistent'
+                    }
+                },
+            }
+        })
     });
 });

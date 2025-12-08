@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "node --test",
+    "test": "node --import tsx --test ./test/**/*.ts",
     "cdk": "cdk",
     "prettier-format": "prettier --config .prettierrc . --write",
     "lint": "eslint . --ext .ts",
@@ -38,6 +38,7 @@
     "constructs": "^10.4.2",
     "extract-zip": "^2.0.1",
     "source-map-support": "^0.5.21",
+    "tsx": "^4.21.0",
     "tweetnacl": "^1.0.3",
     "typescript": "^5.8.3",
     "uuid": "^11.0.5"
